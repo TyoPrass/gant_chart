@@ -51,22 +51,7 @@
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">Task List</h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="task_cards" style="max-height: 300px; overflow-y: auto;">
-                            <!-- Task cards will be dynamically added here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+      
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
