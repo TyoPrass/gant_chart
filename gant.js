@@ -70,34 +70,5 @@ $(document).ready(function () {
         });
     });
 
-    // Function to update task cards with action buttons
-    function updateTaskCards(data) {
-        let taskContainer = $("#task_cards");
-        taskContainer.empty();
-        data.forEach(task => {
-            let taskCard = $(`
-                <div class="task-card" data-id="${task.id}">
-                    <p>${task.text}</p>
-                    <button class="update-task">Update</button>
-                    <button class="delete-task">Delete</button>
-                </div>
-            `);
-            taskContainer.append(taskCard);
-        });
 
-        // Attach event listeners for update and delete buttons
-        $(".update-task").click(function () {
-            let taskId = $(this).parent().data("id");
-            let task = gantt.getTask(taskId);
-            task.text = prompt("Update task text:", task.text) || task.text;
-            gantt.updateTask(taskId);
-        });
-
-        $(".delete-task").click(function () {
-            let taskId = $(this).parent().data("id");
-            if (confirm("Are you sure you want to delete this task?")) {
-                gantt.deleteTask(taskId);
-            }
-        });
-    }
 });

@@ -23,91 +23,19 @@
     </style>
 </head>
 <body>
-    <h2>Gantt Chart dengan CRUD (PHP & MySQL)</h2>
-    <div id="gantt_here"></div>
-
+    <h2>Gantt Chart JQUERY PHP</h2>
     <div class="container mt-4">
-        <h3>Task List</h3>
-        <div id="task_cards" class="row row-cols-1 row-cols-md-3 g-4">
-            <!-- Cards akan ditambahkan di sini -->
+        <div class="card">
+            <div class="card-header">
+                Gantt Chart
+            </div>
+            <div class="card-body">
+                <div id="gantt_here"></div>
+            </div>
         </div>
     </div>
 
-    <script>
-        $(document).ready(function () {
-            gantt.config.date_format = "%Y-%m-%d";
-
-            gantt.init("gantt_here");
-
-            // Ambil data dari server
-            $.getJSON("data.php", function (data) {
-                gantt.parse({ data: data });
-                updateTaskCards(data);
-            });
-
-            // Tambah data baru
-            gantt.attachEvent("onAfterTaskAdd", function (id, task) {
-                $.ajax({
-                    url: "data.php",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        action: "create",
-                        text: task.text,
-                        start_date: gantt.date.date_to_str("%Y-%m-%d")(task.start_date),
-                        duration: task.duration,
-                        progress: task.progress,
-                        parent: task.parent
-                    }),
-                    success: function (response) {
-                        let res = JSON.parse(response);
-                        gantt.changeTaskId(id, res.id);
-                        updateTaskCards(gantt.serialize().data);
-                    }
-                });
-            });
-
-            // Update data
-            gantt.attachEvent("onAfterTaskUpdate", function (id, task) {
-                $.ajax({
-                    url: "data.php",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        action: "update",
-                        id: id,
-                        text: task.text,
-                        start_date: gantt.date.date_to_str("%Y-%m-%d")(task.start_date),
-                        duration: task.duration,
-                        progress: task.progress,
-                        parent: task.parent
-                    }),
-                    success: function () {
-                        console.log("Task updated");
-                        updateTaskCards(gantt.serialize().data);
-                    }
-                });
-            });
-
-            // Hapus data   
-            gantt.attachEvent("onAfterTaskDelete", function (id) {
-                $.ajax({
-                    url: "data.php",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        action: "delete",
-                        id: id
-                    }),
-                    success: function () {
-                        console.log("Task deleted");
-                        updateTaskCards(gantt.serialize().data);
-                    }
-                });
-            });
-
- 
-        });
+    <script src="gant.js">
     </script>
 </body>
 </html>
