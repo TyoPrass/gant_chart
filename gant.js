@@ -1,15 +1,16 @@
 $(document).ready(function () {
     gantt.config.date_format = "%Y-%m-%d";
-
+    gantt.config.show_progress = true;
     gantt.init("gantt_here");
 
-    // Ambil data dari server
-    $.getJSON("data.php", function (data) {
-        gantt.parse({ data: data });
-        updateTaskCards(data);
+    // Load data from server
+    $.getJSON("data.php", function (response) {
+        // Parse the response directly since it's already in JSON format
+        gantt.parse({ data: JSON.parse(response) });
+        updateTaskCards(JSON.parse(response));
     });
 
-    // Tambah data baru
+    // Add new task
     gantt.attachEvent("onAfterTaskAdd", function (id, task) {
         $.ajax({
             url: "data.php",
@@ -17,21 +18,24 @@ $(document).ready(function () {
             contentType: "application/json",
             data: JSON.stringify({
                 action: "create",
+                id: id, // Include the id
                 text: task.text,
                 start_date: gantt.date.date_to_str("%Y-%m-%d")(task.start_date),
                 duration: task.duration,
-                progress: task.progress,
-                parent: task.parent
+                progress: task.progress || 0,
+                parent: task.parent || 0
             }),
             success: function (response) {
-                let res = JSON.parse(response);
-                gantt.changeTaskId(id, res.id);
-                updateTaskCards(gantt.serialize().data);
+                const res = JSON.parse(response);
+                if (res.status === "success") {
+                    gantt.changeTaskId(id, res.id);
+                    updateTaskCards(gantt.serialize().data);
+                }
             }
         });
     });
 
-    // Update data
+    // Update task
     gantt.attachEvent("onAfterTaskUpdate", function (id, task) {
         $.ajax({
             url: "data.php",
@@ -43,17 +47,19 @@ $(document).ready(function () {
                 text: task.text,
                 start_date: gantt.date.date_to_str("%Y-%m-%d")(task.start_date),
                 duration: task.duration,
-                progress: task.progress,
-                parent: task.parent
+                progress: task.progress || 0,
+                parent: task.parent || 0
             }),
-            success: function () {
-                console.log("Task updated");
-                updateTaskCards(gantt.serialize().data);
+            success: function (response) {
+                const res = JSON.parse(response);
+                if (res.status === "updated") {
+                    updateTaskCards(gantt.serialize().data);
+                }
             }
         });
     });
 
-    // Hapus data   
+    // Delete task
     gantt.attachEvent("onAfterTaskDelete", function (id) {
         $.ajax({
             url: "data.php",
@@ -63,12 +69,12 @@ $(document).ready(function () {
                 action: "delete",
                 id: id
             }),
-            success: function () {
-                console.log("Task deleted");
-                updateTaskCards(gantt.serialize().data);
+            success: function (response) {
+                const res = JSON.parse(response);
+                if (res.status === "deleted") {
+                    updateTaskCards(gantt.serialize().data);
+                }
             }
         });
     });
-
-
 });

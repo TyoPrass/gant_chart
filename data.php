@@ -9,20 +9,16 @@ if ($conn->connect_error) {
     die("Koneksi gagal: " . $conn->connect_error);
 }
 
-// Cek apakah request adalah GET atau POST
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method == 'GET') {
-    // Ambil data tugas dari database
-    $sql = "SELECT * FROM tasks";
+    // Fetch tasks from the single JSON column
+    $sql = "SELECT task_data FROM tasks_json";
     $result = $conn->query($sql);
-    $tasks = [];
-
-    while ($row = $result->fetch_assoc()) {
-        $tasks[] = $row;
-    }
-
-    echo json_encode($tasks);
+    $row = $result->fetch_assoc();
+    
+    // If data exists, return it, otherwise return empty array
+    echo $row ? $row['task_data'] : '[]';
 }
 
 if ($method == 'POST') {
@@ -31,27 +27,56 @@ if ($method == 'POST') {
     if (isset($data['action'])) {
         $action = $data['action'];
 
+        // Get current tasks
+        $sql = "SELECT task_data FROM tasks_json LIMIT 1";
+        $result = $conn->query($sql);
+        $tasks = [];
+        
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $tasks = json_decode($row['task_data'], true);
+        }
+
         if ($action == 'create') {
-            $stmt = $conn->prepare("INSERT INTO tasks (text, start_date, duration, progress, parent) VALUES (?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssidi", $data['text'], $data['start_date'], $data['duration'], $data['progress'], $data['parent']);
+            $task = [
+                'id' => uniqid(),
+                'text' => $data['text'],
+                'start_date' => $data['start_date'],
+                'duration' => $data['duration'],
+                'progress' => $data['progress'],
+                'parent' => $data['parent']
+            ];
+            $tasks[] = $task;
+            
+            $json_tasks = json_encode($tasks);
+            $stmt = $conn->prepare("UPDATE tasks_json SET task_data = ?");
+            $stmt->bind_param("s", $json_tasks);
             $stmt->execute();
-            echo json_encode(["status" => "success", "id" => $conn->insert_id]);
+            echo json_encode(["status" => "success", "id" => $task['id']]);
         }
 
-        if ($action == 'update') {
-            $stmt = $conn->prepare("UPDATE tasks SET text=?, start_date=?, duration=?, progress=?, parent=? WHERE id=?");
-            $stmt->bind_param("ssidii", $data['text'], $data['start_date'], $data['duration'], $data['progress'], $data['parent'], $data['id']);
+        if ($action == 'update' || $action == 'delete') {
+            if ($action == 'update') {
+                foreach ($tasks as &$task) {
+                    if ($task['id'] == $data['id']) {
+                        $task = $data;
+                        break;
+                    }
+                }
+            } else {
+                $tasks = array_filter($tasks, function($task) use ($data) {
+                    return $task['id'] != $data['id'];
+                });
+            }
+            
+            $json_tasks = json_encode(array_values($tasks));
+            $stmt = $conn->prepare("UPDATE tasks_json SET task_data = ?");
+            $stmt->bind_param("s", $json_tasks);
             $stmt->execute();
-            echo json_encode(["status" => "updated"]);
-        }
-
-        if ($action == 'delete') {
-            $stmt = $conn->prepare("DELETE FROM tasks WHERE id=?");
-            $stmt->bind_param("i", $data['id']);
-            $stmt->execute();
-            echo json_encode(["status" => "deleted"]);
+            echo json_encode(["status" => $action == 'update' ? "updated" : "deleted"]);
         }
     }
 }
 
 $conn->close();
+?>
